@@ -15,6 +15,7 @@ export default function Recovery() {
 
   useEffect(() =>{
     generateOTP(username).then((OTP) =>{
+      console.log(OTP);
       if(OTP) return toast.success('OTP has been sent to your email.');
       return toast.error("Problem while geenrating OTP");
     })
@@ -23,12 +24,15 @@ export default function Recovery() {
   async function onSubmit(e){
     e.preventDefault();
 
-    let {status} = await verifyOTP({ username, code: OTP});
-    if(status === 201){
-      toast.success('Verified successfully');
-      return navigate('/reset')
+    try {
+      let {status} = await verifyOTP({ username, code: OTP});
+      if(status === 201){
+        toast.success('Verified successfully');
+        return navigate('/reset')
+      }    
+    } catch (error) {
+      return toast.error('Wrong OTP');
     }
-    return toast.error('Wrong OTP');
   }
 
   const formik = useFormik({
@@ -42,6 +46,20 @@ export default function Recovery() {
       console.log(values);
     }
   })
+
+  //handler function on resend OTP
+  function resendOTP(){
+    let sendPromise = generateOTP(username);
+    toast.promise(sendPromise, {
+      loading: 'Sending',
+      success: <b>OTP hase been sent to your email.</b>,
+      error: <b>Could not send</b>
+    });
+
+    sendPromise.then(OTP=>{
+      // console.log(OTP);
+    })
+  }
 
   return (
     <div className="container mx-auto">
@@ -71,11 +89,12 @@ export default function Recovery() {
               <input onChange={(e) => setOTP(e.target.value)} className={styles.textbox} type="password" placeholder="OTP" />
               <button className={styles.btn} type='submit'>Recover</button>
             </div>
-
-            <div className="text-center py-4">
-              <span className="text-gray-500">Can't get OTP?<button className="text-red-500">Resend</button></span>
-            </div>
           </form>
+
+          <div className="text-center py-4">
+            <span className="text-gray-500">Can't get OTP?<button onClick={resendOTP} className="text-red-500">Resend</button></span>
+          </div>
+
         </div>
       </div>
     </div>
